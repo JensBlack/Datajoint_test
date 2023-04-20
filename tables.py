@@ -1,15 +1,18 @@
+
 import datajoint as dj
 import numpy as np
 import pandas as pd
 
-from utils import import_labels_to_table, load_pose, get_bodyparts
+from utils.load_data import import_labels_to_table, load_pose, get_bodyparts
 
 
+dj.config['database.host'] = '127.0.0.1'
+dj.config['database.user'] = 'root'
+dj.config['database.password'] = 'simple'
+dj.conn()
 # fail-safe user name retrieval
 username = dj.conn().conn_info['user']
-#TODO: remove force reset
-#force reset schema for testing and development
-schema = dj.schema('{}_tutorial_pipeline'.format(username))
+schema = dj.schema('{}_pipeline'.format(username))
 
 
 """Manual entry tables"""
@@ -104,7 +107,6 @@ class Annotation(dj.Imported):
 
         """Calculate some statistics"""
 
-
         fps = (Session & key).fetch1("video_fps")
 
         desc_df = pd.DataFrame(annotations.value_counts(), columns=["total_frames"])
@@ -115,7 +117,6 @@ class Annotation(dj.Imported):
         insert_dict = desc_df.to_dict("index")
 
         for behavior_key, stats in insert_dict.items():
-            print(behavior_key, stats)
             self.Stats.insert1(dict(key, behavior_id = behavior_key
                                , **stats))
 
@@ -144,7 +145,9 @@ class Pose(dj.Imported):
 
 
 
-"""Computed tables"""
+# add dummy entry to lookup tables
+Experimenter.insert1((0, "JensBlack", "M"), skip_duplicates = True)
+Model.insert1((0, "TestModelName", "SingleInstance","SLEAP", "2022-10-20", "Test entry for model description. Date is fake."), skip_duplicates = True)
 
 
 
