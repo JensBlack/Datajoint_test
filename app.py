@@ -1,8 +1,14 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 import os
 import glob
 import datetime
+from streamlit import components
+import base64
+from io import StringIO
+import datajoint as dj
+from tables import *
 
 def setup_layout():
     st.set_page_config(
@@ -23,9 +29,18 @@ def setup_layout():
     header_container = st.container()
 
     with header_container:
-        st.header("DataJoint Import App")
+        columns = st.columns([0.4, 1, 1])
+        with columns[0]:
+            show_diagram()
+        with columns[1]:
+            st.title("DataJoint Import App")
+            st.write(f"Status: {dj.conn()}")
 
+def show_diagram():
+    """Show the datajoint diagram of the schema"""
 
+    diagram_img = dj.Diagram(schema).make_image()
+    st.image(diagram_img)
 
 def main():
     today = datetime.datetime.today().strftime("%Y-%m-%d")
@@ -147,6 +162,26 @@ def main():
     if st.button("Insert data into datajoint"):
         st.balloons()
         st.success("You reached the end of the demo. To be continued...")
+        #insert data into datajoint
+        #insert mouse dataframe
+        mice = df_mice_ed.to_dict(orient="records")
+        for m in mice:
+            Mouse().insert1(m, skip_duplicates=True)
+        #insert session dataframe
+        sessions = df_session_ed.to_dict(orient="records")
+        for s in sessions:
+            Session().insert1(s, skip_duplicates=True)
+        #insert model dataframe
+        models = model_info.to_dict(orient="records")
+        for m in models:
+            Model().insert1(m, skip_duplicates=True)
+        #insert experimenter dataframe
+        exp = df_exp_ed.to_dict(orient="records")
+        for e in exp:
+            Experimenter().insert1(e, skip_duplicates=True)
+
+
+
 
     #add footer
     with st.container() as bottom_cont:
